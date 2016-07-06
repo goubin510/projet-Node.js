@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Chat live</title>
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+	<div class="container">
+		<div class="jumbotron">
+			<h1 id="titre"></h1>
+			<h2 id="sousTitre"></h2>
+			<p id="pseudo"></p> 
+			<button type="button" class="btn btn-xs" id="boutonPseudo">Changer de pseudo</button>
+			<p id="room"></p>
+			<button type="button" class="btn btn-xs" id="boutonRoom"></button>
+		</div>
+		<form action="/" method="post" id="formChat">
+            <input type="text" id="message" placeholder="Votre message..." size="50" autofocus />
+            <button type="submit" class="btn btn-sm" id="boutonEnvoie">Envoyer</button>
+            <button type="button" class="btn btn-sm" id="boutonClear">Effacer le Chat</button>
+        </form>
+        
+		<div id="zoneChat">
+
+		</div>
+	</div>
+
+
+	<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script>
+
+        	// On se connecte au socket + on charge un message de bienvenue comme titre
+        	var socket = io.connect('http://localhost:8080');
+
+        	document.getElementById("titre").innerHTML = "Bienvenue sur notre site de chat";
+        	document.getElementById("boutonRoom").innerHTML = "accéder à une room";
+
+            // On demande le pseudo
+            var pseudo = prompt('Quel est votre pseudo ?');
+            var room = 'lobby';
+
+            // On envoie le pseudo  et la room au serveur
+            socket.emit('connexion', {pseudo: pseudo, room: room});
+            // Lorsque le serveur renvoie le pseudo
+            socket.on('retourConnexion', function(data) {
+            	document.getElementById("pseudo").innerHTML = "Pseudo : "+ data.pseudo;
+        		document.getElementById("room").innerHTML = "room : "+ data.room;
+        		pseudo = data.pseudo;
+        		room = data.room;
+        		if (room == 'lobby') {
+        			document.getElementById("titre").innerHTML = "Bienvenue sur notre site de chat";
+        			document.getElementById("sousTitre").innerHTML = '';
+        			document.getElementById("boutonRoom").innerHTML = "accéder à une room";
+        		}
+
+        		if(room != 'lobby'){
+    			document.getElementById("titre").innerHTML = '';
+        		document.getElementById("sousTitre").innerHTML = 'Vous êtes dans la salle : '+ room;
+        		document.getElementById("boutonRoom").innerHTML = "changer de room";
+        		}
+            })
+
+            // Lorsqu'une nouvelle personne rejoins un chat
+            socket.on('nouvelleConnexion',function(data){
+            	if (room === data.room) {
+            		$('#zoneChat').prepend('<p><kbd>' + data.pseudo + '</kbd><em> a rejoint le Chat !</em></p>');
+            	}
+            })
+
+            // Lorsqu'une personne se déconnecte
+            socket.on('deco', function(data){
+            	if(room === data.room){
+            		$('#zoneChat').prepend('<p><kbd>' + data.pseudo + '</kbd><em> s\'est déconnecté...</em></p>');
+            	}
+            })
+
+            // On renvoie le message traité par le serveur à l'auteur et on l'affiche
+            socket.on('retourEnvoieAuteur', function(data){
+            		$('#zoneChat').prepend('<p><kbd> -> Vous</kbd> <samp>'+ data.message +'</samp></p>');
+            })
+
+            // On envoie le message aux utilisateurs et on l'affiche pour les personnes de la meme room
+            socket.on('retourEnvoieChat', function(data){
+            	if(room === data.room){
+            		$('#zoneChat').prepend('<p><kbd>' + data.pseudo + '</kbd> <samp>'+ data.message +'</samp></p>');
+            	}
+            })
+
+            // On réagis au clique pour changer le pseudo
+            $('#boutonPseudo').click(function () {
+            	pseudo = prompt('Quel est votre nouveau pseudo ?');
+            	socket.emit('connexion',{pseudo: pseudo, room: room});
+            })
+
+            // On réagis au clique pour changer de room
+            $('#boutonRoom').click(function () {
+            	room = prompt('Quelle salle souhaitez vous rejoindre ?');
+            	socket.emit('connexion',{pseudo: pseudo, room: room});
+            })
+
+            $('#boutonClear').click(function () {
+            	document.getElementById("zoneChat").innerHTML = '';
+            })
+
+            // On envoie le message au serveur
+            $('#formChat').submit(function () {
+                var message = $('#message').val();
+                socket.emit('envoie', {message: message});
+                $('#message').val('').focus();
+                return false;
+            });
+            
+            
+        </script>
+    </body>
+    </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
