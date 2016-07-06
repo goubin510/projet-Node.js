@@ -31,29 +31,40 @@ app.use(function(req, res, next){
 io.sockets.on('connection', function (socket, pseudo, room) {
     socket.passage = 0;
 
+    // lors d'une modification du pseudo ou de la salle on recharge les données
     socket.on('connexion', function(data) {
+    // S'il sagit d'une première connection on affiche pas la déco de la personne puisqu'elle vient d'arriver.
         if (socket.passage === 1) {
             socket.broadcast.emit('deco', {pseudo: socket.pseudo, room: socket.room});
         }
         socket.passage = 1;
+        // On transforme les balise et autres morceaux de code en text simple
         pseudo = ent.encode(data.pseudo);
         room = ent.encode(data.room);
         socket.pseudo = pseudo;
         socket.room = room;
+
+        // Une fois modifiées, on renvoie les données aux clients
         socket.emit('retourConnexion', {pseudo: socket.pseudo, room: socket.room});
         socket.broadcast.emit('nouvelleConnexion', {pseudo: socket.pseudo, room: socket.room});
     });
 
+    // On écoute les déconnections pour en infromer les autres utilisateurs
     socket.on('disconnect', function () {
         socket.broadcast.emit('deco', {pseudo: socket.pseudo, room: socket.room});
   });
 
+    // On récupère les message tapé, on les transforme en text pour ceux contenant du code
     socket.on('envoie', function(data){
         var message = ent.encode(data.message);
+
+    // On renvoie les messages traités aux clients.
         socket.emit('retourEnvoieAuteur', {message: message});
         socket.broadcast.emit('retourEnvoieChat', {message: message, room: socket.room, pseudo: socket.pseudo});
     })
 
 });
 
-server.listen(8080);
+var port = Number(process.env.PORT || 8080);
+
+server.listen(port);

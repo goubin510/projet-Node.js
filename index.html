@@ -22,7 +22,7 @@
             <button type="submit" class="btn btn-sm" id="boutonEnvoie">Envoyer</button>
             <button type="button" class="btn btn-sm" id="boutonClear">Effacer le Chat</button>
         </form>
-        
+
 		<div id="zoneChat">
 
 		</div>
@@ -43,14 +43,21 @@
             var pseudo = prompt('Quel est votre pseudo ?');
             var room = 'lobby';
 
-            // On envoie le pseudo  et la room au serveur
+            // On envoie le pseudo et la room au serveur
             socket.emit('connexion', {pseudo: pseudo, room: room});
+
             // Lorsque le serveur renvoie le pseudo
             socket.on('retourConnexion', function(data) {
+
+            	// On rafraichi l'affichge de la page
             	document.getElementById("pseudo").innerHTML = "Pseudo : "+ data.pseudo;
         		document.getElementById("room").innerHTML = "room : "+ data.room;
+
+        		// On actualise les variable locales
         		pseudo = data.pseudo;
         		room = data.room;
+
+        		// On change l'en-tete en fonction de la room
         		if (room == 'lobby') {
         			document.getElementById("titre").innerHTML = "Bienvenue sur notre site de chat";
         			document.getElementById("sousTitre").innerHTML = '';
@@ -102,6 +109,7 @@
             	socket.emit('connexion',{pseudo: pseudo, room: room});
             })
 
+            // On réagis au bouton clear pour effacer les messages affichés
             $('#boutonClear').click(function () {
             	document.getElementById("zoneChat").innerHTML = '';
             })
