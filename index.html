@@ -34,7 +34,7 @@
 	<script>
 
         	// On se connecte au socket + on charge un message de bienvenue comme titre
-        	var socket = io.connect('http://localhost:80');
+        	var socket = io.connect('http://localhost:'+PORT);
 
         	document.getElementById("titre").innerHTML = "Bienvenue sur notre site de chat";
         	document.getElementById("boutonRoom").innerHTML = "accéder à une room";
